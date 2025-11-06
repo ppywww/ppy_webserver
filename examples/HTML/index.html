@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebServer Information Page</title>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .info-table th, .info-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .info-table th {
+            background-color: #f2f2f2;
+        }
+        .feature-list {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-left: 4px solid #007acc;
+            margin: 20px 0;
+        }
+        .test-links {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .test-links a {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #007acc;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .test-links a:hover {
+            background-color: #005a99;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebServer 服务器信息</h1>
+        
+        <div class="feature-list">
+            <h2>服务器特性</h2>
+            <ul>
+                <li>基于Reactor模式的事件驱动架构</li>
+                <li>使用epoll实现I/O多路复用</li>
+                <li>线程池支持并发处理</li>
+                <li>非阻塞I/O操作</li>
+                <li>HTTP/1.1协议支持</li>
+                <li>Keep-Alive长连接支持</li>
+                <li>高效的定时器管理</li>
+                <li>异步日志系统</li>
+            </ul>
+        </div>
+
+        <h2>服务器架构信息</h2>
+        <table class="info-table">
+            <tr>
+                <th>组件</th>
+                <th>描述</th>
+            </tr>
+            <tr>
+                <td>EventLoop</td>
+                <td>事件循环，Reactor模式核心</td>
+            </tr>
+            <tr>
+                <td>Epoll</td>
+                <td>I/O多路复用，监听文件描述符事件</td>
+            </tr>
+            <tr>
+                <td>Channel</td>
+                <td>封装文件描述符及其事件的类</td>
+            </tr>
+            <tr>
+                <td>HttpData</td>
+                <td>HTTP请求处理和响应生成</td>
+            </tr>
+            <tr>
+                <td>Timer</td>
+                <td>连接超时和定时器管理</td>
+            </tr>
+            <tr>
+                <td>ThreadPool</td>
+                <td>线程池，处理并发请求</td>
+            </tr>
+        </table>
+
+        <h2>测试链接</h2>
+        <div class="test-links">
+            <a href="hello">Hello World测试</a>
+            <a href="favicon.ico">查看Favicon图标</a>
+        </div>
+
+        <h2>服务器性能</h2>
+        <table class="info-table">
+            <tr>
+                <th>测试类型</th>
+                <th>性能表现</th>
+            </tr>
+            <tr>
+                <td>短连接 QPS</td>
+                <td>约 120,000+</td>
+            </tr>
+            <tr>
+                <td>长连接 QPS</td>
+                <td>约 330,000+</td>
+            </tr>
+            <tr>
+                <td>并发处理</td>
+                <td>支持数万并发连接</td>
+            </tr>
+        </table>
+
+        <div class="footer">
+            <p>WebServer - 基于C++11的高性能Web服务器</p>
+        </div>
+    </div>
+</body>
+</html>
