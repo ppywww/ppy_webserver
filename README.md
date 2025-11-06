@@ -58,7 +58,7 @@
 *   **状态**：`规划中`
 *   **功能**：连接复用、心跳保活、负载均衡。
 
-## 💻 API 使用示例
+
 
 ### 使用线程池处理任务
 
@@ -97,16 +97,137 @@ ppsever/                          # 项目根目录
 │   └── test.cpp
 └── (其他文件)
 ```
+## 🔧 开发指南 ##
 
-## 🔧 开发指南
+🏗️ Application（应用程序总管）
 
-### 获取代码并设置开发环境
+application.hpp & application.cpp
 
-## 📊 性能测试
+角色：就像公司的总经理，负责整个服务器的启动、运行和关闭。
 
-## 🗺️ 路线图
+API功能：
+• GetInstance()：获取总经理的唯一办公室（确保只有一个实例）
 
-## 🤝 贡献指南
+• Initialize()：总经理准备开业，检查所有设备是否就绪
+
+• Run()：总经理下令正式营业，服务器开始接待客户
+
+• Shutdown()：总经理下令打烊，优雅地关闭所有服务
+
+• GetWebServer()等：总经理可以随时查看各个部门（如Web服务部）的工作状态
+
+简单说：Application是大脑，控制整个服务器的生命周期的。
+
+🌐 WebServer（网络服务部）
+
+web_server.hpp & web_server.cpp
+
+角色：就像公司的前台接待部门，专门处理客户（HTTP请求）的来访。
+
+API功能：
+• Start()：打开公司大门开始接待客户
+
+• Stop()：礼貌地告诉客户"我们快打烊了"，等当前客户处理完
+
+• ForceStop()：直接关门，不管还有没有客户在店里
+
+• Get("/path", handler)：设置规则——当客户问"产品价格"时，由谁来回答案
+
+• Post("/api", handler)：设置规则——当客户提交订单时，由谁来处理
+
+• Use(middleware)：设置安检员，对所有客户进行统一检查（如身份验证）
+
+简单说：WebServer是门面，直接与用户打交道，接收请求并返回响应。
+
+🔄 EventLoop（事件调度中心）
+
+event_loop.hpp & event_loop.cpp
+
+角色：就像公司的调度员，不停查看有没有新客户来电或来访。
+
+API功能：
+• Loop()：调度员开始值班，不断检查电话和门铃
+
+• Stop()：调度员下班
+
+• AddFd(fd, events, callback)：告诉调度员"门铃响了就叫我"
+
+• RunInLoop(task)：让调度员立即处理一个紧急任务
+
+简单说：EventLoop是眼睛和耳朵，时刻监控所有活动连接。
+
+👥 ThreadPool（员工团队）
+
+thread_pool.hpp & thread_pool.cpp
+
+角色：就像公司的员工团队，实际处理客户请求的工作人员。
+
+API功能：
+• Submit(task)：经理分配任务给空闲员工
+
+• Start()：召集所有员工上岗
+
+• Shutdown()：让员工们完成手头工作后下班
+
+• SetCoreThreadSize(num)：调整常驻员工数量
+
+简单说：ThreadPool是干活的人，真正处理业务逻辑。
+
+💾 MemoryPool（物资管理处）
+
+memory_pool.hpp & memory_pool.cpp
+
+角色：就像公司的物资仓库，预先准备好常用物资，随用随取。
+
+API功能：
+• Construct()：从仓库领一套标准包装盒（内存块）
+
+• Destroy()：把包装盒还回仓库以便重复使用
+
+• Preallocate(num)：提前准备一批包装盒，避免临时短缺
+
+简单说：MemoryPool是后勤保障，提高资源利用效率。
+
+🔗 ConnectionPool（外联部）
+
+connection_pool.hpp & connection_pool.cpp
+
+角色：就像公司的外联专员，专门负责与数据库等外部系统打交道。
+
+API功能：
+• GetConnection()：派一个专员去数据库取数据
+
+• Initialize(config)：设置外联专员的联系方式和工作流程
+
+• Shutdown()：所有外联专员结束工作
+
+简单说：ConnectionPool是桥梁，连接服务器和数据库。
+
+🎯 如何协同工作
+
+想象一个客户来访的场景：
+1. 门卫（EventLoop）发现新客户敲门
+2. 前台（WebServer）接待客户，了解需求
+3. 经理（Application）决定处理流程
+4. 后勤（MemoryPool）提供必要的工具和资源
+5. 员工（ThreadPool）实际处理客户请求
+6. 如果需要数据，外联（ConnectionPool）去数据库查询
+7. 处理完成后，前台将结果返回给客户
+
+💡 总结
+
+每个API就像公司里的不同岗位，各司其职又相互配合：
+• 管理岗（Application）负责整体协调
+
+• 接待岗（WebServer）负责对外沟通
+
+• 监控岗（EventLoop）负责实时调度
+
+• 执行岗（ThreadPool）负责实际工作
+
+• 后勤岗（MemoryPool）提供资源支持
+
+• 外联岗（ConnectionPool）处理外部联系
 
 
 **Happy Coding!** 如果您觉得这个项目有帮助，请给它一个 ⭐ Star 支持我们！
