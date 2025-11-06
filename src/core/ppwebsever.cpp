@@ -1,19 +1,7 @@
 
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/epoll.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <errno.h>
-#include <time.h>
-#include <sys/stat.h>
-#include <sys/sendfile.h>
-///gitlsss
+#include "ppwebsever.h"
 
 
 #define BUFFER_LENGTH		4096
@@ -31,12 +19,11 @@
 
 typedef int NCALLBACK(int ,int, void*);
 
-struct ntyevent {
+struct event {
 	int fd;//
 	int events;//
 	void *arg;
 	int (*callback)(int fd, int events, void *arg);
-	
 	int status;
 	char buffer[BUFFER_LENGTH];
 	int length;
@@ -47,10 +34,8 @@ struct ntyevent {
 };
 
 struct eventblock {
-
 	struct eventblock *next;
 	struct ntyevent *events;
-	
 };
 
 struct ntyreactor {
@@ -66,24 +51,20 @@ struct ntyevent *ntyreactor_idx(struct ntyreactor *reactor, int sockfd);
 
 
 void nty_event_set(struct ntyevent *ev, int fd, NCALLBACK callback, void *arg) {
-
 	ev->fd = fd;
 	ev->callback = callback;
 	ev->events = 0;
 	ev->arg = arg;
 	ev->last_active = time(NULL);
-
 	return ;
 	
 }
 
 
 int nty_event_add(int epfd, int events, struct ntyevent *ev) {
-
 	struct epoll_event ep_ev = {0, {0}};
 	ep_ev.data.ptr = ev;
 	ep_ev.events = ev->events = events;
-
 	int op;
 	if (ev->status == 1) {
 		op = EPOLL_CTL_MOD;
