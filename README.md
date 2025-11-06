@@ -25,7 +25,9 @@
 | **构建工具** | CMake |
 | **操作系统** | Linux (主要开发环境)|
 
-## 🚀 快速开始
+## 🚀 struct
+
+
 
 ### 前置条件
 
@@ -37,22 +39,22 @@
 ## ⚙️ 核心组件
 
 ### WebServer 核心
-*   **描述**：负责服务器的启动、停止、网络监听、信号处理以及作为连接请求的入口。
+*   **描述**：负责服务器的启动、停止、网络监听、信号处理以及作为连接请求的入口。使用reactor模式实现。
 *   **状态**：`开发中`
 *   **关键特性**：事件循环、信号处理、优雅退出。
 
-### 线程池 (ThreadPool)
+### 线程池 (Thread_Pool)
 *   **描述**：基于生产者-消费者模型，管理一组工作线程，用于处理传入的HTTP请求等异步任务。
 *   **状态**：`ing`
 *   **配置参数**：核心线程数、最大线程数、任务队列容量、线程空闲存活时间。
 
-### 内存池 (MemoryPool)
+### 内存池 (Memory_Pool)
 *   **描述**：预分配一大块内存，并将其划分为多个固定大小或不同规格的小块，供程序快速申请和释放，尤其适用于高频小内存分配场景。
 *   **状态**：`待开发`
-*   **设计模式**：可考虑 Slab 分配器或自由链表管理。
+*   **设计模式**：
 
-### 数据库连接池 (ConnectionPool)
-*   **描述**：管理到后端数据库（如 MySQL, PostgreSQL）或缓存（如 Redis）的连接，避免频繁建立和断开连接的开销。
+### 数据库连接池 (Connection_Pool)
+*   **描述**：管理到后端数据库MySQL连接，避免频繁建立和断开连接的开销。
 *   **状态**：`规划中`
 *   **功能**：连接复用、心跳保活、负载均衡。
 
@@ -64,19 +66,36 @@
 ## 📁 项目目录结构
 
 ```
-poolpoolserver/
-├── CMakeLists.txt          # 项目构建配置
-├── config/                 # 配置文件目录
-│   └── default.conf        # 默认配置文件
-├── docs/                   # 项目文档
-│   └── ...                 # 设计文档、API详解等
-├── include/                # 头文件目录
-│   └── poolpoolserver/     # 公共头文件
-├── src/                    # 源代码目录
-│   ├── core/               # 服务器核心代码 (当前开发重点)
-│   ├── pool/               # 各类池化组件实现 (线程池、内存池等)
-├── tests/                  # 单元测试和性能测试代码
-└── examples/               # 使用示例代码
+ppsever/                          # 项目根目录
+├── CMakeLists.txt               # 项目构建配置
+├── README.md                    # 项目说明文档
+├── config/                      # 配置文件目录
+│   └── init.conf               # 初始化配置文件
+├── docs/                        # 项目文档
+├── examples/                    # 使用示例
+├── include/                     # 公共头文件目录（目前为空）
+├── src/                         # 源代码目录
+│   ├── core/                   # 核心组件
+│   │   ├── application.hpp     # 应用管理层
+│   │   ├── event_loop.hpp      # 事件循环核心
+│   │   ├── ppwebsever.cpp      # Web服务器实现
+│   │   └── ppwebsever.hpp      # Web服务器接口
+│   └── pool/                   # 池化组件模块
+│       ├── connection_pool/    # 数据库连接池
+│       │   ├── connection_pool.cpp
+│       │   └── connection_pool.hpp
+│       ├── memory_pool/        # 内存池
+│       │   ├── memory_pool.cpp
+│       │   └── memory_pool.hpp
+│       └── thread_pool/        # 线程池
+│           ├── core/          # 核心实现
+│           │   ├── thread_pool.cpp
+│           │   └── thread_pool.hpp
+│           └── sample/        # 使用示例
+│               └── pool_api.md
+├── tests/                      # 测试代码
+│   └── test.cpp
+└── (其他文件)
 ```
 
 ## 🔧 开发指南
