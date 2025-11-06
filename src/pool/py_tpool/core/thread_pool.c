@@ -1,4 +1,4 @@
-#include"tpool.h"
+#include"thread_pool.h"
 
 
 static void* thread_worker(void *thrd_pool);
@@ -52,7 +52,6 @@ thread_pool_t *thread_pool_creat(int thrd_count,int queue_size){
         while(que->count == 0 && pool->closed == 0){
             //休眠
             pthread_cond_wait(&(pool->condition),&(pool->mutex));
-
         }
         if(pool->closed == 1)break;
         task = que->queue[que->head];
@@ -71,8 +70,6 @@ thread_pool_t *thread_pool_creat(int thrd_count,int queue_size){
 int thread_pool_post(thread_pool_t *pool,handler_pt func,void *arg){
 
 };
-
-
 
 int thread_pool_destroy(thread_pool_t *pool){ 
 
