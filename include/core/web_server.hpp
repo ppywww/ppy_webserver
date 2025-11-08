@@ -6,10 +6,12 @@
 #include <unordered_map>
 
 #include "event_loop.hpp"
-
 #include "thread_pool.hpp"
-#include "core/http_request.hpp"
-#include "core/http_response.hpp"
+#include "connection_manager.hpp"
+#include "connection.hpp"
+
+
+
 
 namespace ppsever {
 

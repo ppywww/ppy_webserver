@@ -161,16 +161,13 @@ bool Connection::TryParseHttpRequest() {
         return false;
     }
     
-    // 使用HTTP解析器解析请求
     auto& http_parser = server_.GetHttpParser();// 获取HTTP解析器
     auto request = http_parser.Parse(read_buffer_);
     
     if (request) {
-        // 成功解析完整请求
         current_request_ = std::move(request);
         read_buffer_.clear(); // 清空已处理数据
         
-        // 触发读取回调
         if (read_callback_) {
             read_callback_();
         }
@@ -178,7 +175,7 @@ bool Connection::TryParseHttpRequest() {
         return true;
     }
     
-    return false; // 需要更多数据
+    return false; 
 }
 
 // 关闭连接
@@ -225,6 +222,8 @@ void Connection::Shutdown() {
 }
 
 // 处理可读事件
+
+//==========测试可以放在这里==========
 void Connection::HandleReadable() {
     try {
         // 边缘触发模式，需要循环读取所有可用数据
@@ -234,7 +233,6 @@ void Connection::HandleReadable() {
                 break;
             }
             
-            // 尝试解析HTTP请求
             if (TryParseHttpRequest()) {
                 break; // 成功解析一个完整请求，退出循环
             }
