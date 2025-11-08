@@ -1,128 +1,166 @@
 #include "core/web_server.hpp"
-#include "core/connection.hpp"
-#include "core/http_request.hpp"
-#include "core/http_response.hpp"
-#include <iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <unistd.h>
+#include <iostream>
 
 namespace ppsever {
 
-// Pimpl实现类
-class WebServer::Impl {
-public:
-    Impl(const Config& config, ThreadPool& thread_pool, EventLoop& event_loop)
-        : config_(config), thread_pool_(thread_pool), event_loop_(event_loop) {}
-    
-    ~Impl() {
-        Stop();
-    }
+WebServer::WebServer(const Config& config, ThreadPool& thread_pool, EventLoop& event_loop)
+    : config_(config), thread_pool_(thread_pool), event_loop_(event_loop) {}
 
-    bool Start() {
-        // 创建监听socket
-        listen_fd_ = socket(AF_INET, SOCK_STREAM, 0);
-        if (listen_fd_ < 0) {
-            return false;
-        }
+WebServer::~WebServer() {
+    Stop();
+}
 
-        // 设置socket选项
-        int opt = 1;
-        setsockopt(listen_fd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-
-        // 绑定地址
-        sockaddr_in addr{};
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(config_.port);
-        inet_pton(AF_INET, config_.host.c_str(), &addr.sin_addr);
-
-        if (bind(listen_fd_, (sockaddr*)&addr, sizeof(addr)) < 0) {
-            close(listen_fd_);
-            return false;
-        }
-
-        // 开始监听
-        if (listen(listen_fd_, config_.backlog) < 0) {
-            close(listen_fd_);
-            return false;
-        }
-
-        // 注册到事件循环
-        event_loop_.AddFd(listen_fd_, EPOLLIN, [this](int fd) {
-            HandleNewConnection(fd);
-        });
-
-        running_ = true;
+bool WebServer::Start() {
+    if (running_) {
         return true;
     }
 
-    void Stop() {
-        if (!running_) return;
-        
-        running_ = false;
+    listen_fd_ = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    if (listen_fd_ < 0) {
+        return false;
+    }
+
+    int opt = 1;
+    setsockopt(listen_fd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(config_.port);
+    inet_pton(AF_INET, config_.host.c_str(), &addr.sin_addr);
+
+    if (bind(listen_fd_, reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0) {
         close(listen_fd_);
-        
-        // 关闭所有活跃连接
-        for (auto& conn : connections_) {
-            conn->Close();
-        }
-        connections_.clear();
+        return false;
     }
 
-    void HandleNewConnection(int listen_fd) {
-        sockaddr_in client_addr{};
-        socklen_t addr_len = sizeof(client_addr);
-        
-        int client_fd = accept(listen_fd, (sockaddr*)&client_addr, &addr_len);
-        if (client_fd < 0) return;
-
-        // 创建新连接
-        auto connection = std::make_unique<Connection>(client_fd, thread_pool_);
-        connections_.push_back(std::move(connection));
+    if (listen(listen_fd_, config_.backlog) < 0) {
+        close(listen_fd_);
+        return false;
     }
+    //注册监听listen_fd_的可读事件回调
+    event_loop_.AddFd(listen_fd_, EventLoop::EPOLL_READ, [this](int fd, uint32_t events) {
+        HandleNewConnection(fd);
+    });
 
-private:
-    Config config_;
-    ThreadPool& thread_pool_;
-    EventLoop& event_loop_;
-    int listen_fd_ = -1;
-    bool running_ = false;
-    std::vector<std::unique_ptr<Connection>> connections_;
-};
-
-// WebServer 公共接口实现
-WebServer::WebServer(const Config& config, ThreadPool& thread_pool, EventLoop& event_loop)
-    : pimpl_(std::make_unique<Impl>(config, thread_pool, event_loop)) {}
-
-WebServer::~WebServer() = default;
-
-bool WebServer::Start() { return pimpl_->Start(); }
-void WebServer::Stop() { pimpl_->Stop(); }
-void WebServer::ForceStop() { pimpl_->Stop(); }
-
-// 路由注册方法（简化实现）
-void WebServer::Get(const std::string& path, RequestHandler handler) {
-    // 路由表实现
+    running_ = true;
+    return true;
 }
 
-void WebServer::Post(const std::string& path, RequestHandler handler) {}
-void WebServer::Put(const std::string& path, RequestHandler handler) {}
-void WebServer::Delete(const std::string& path, RequestHandler handler) {}
-void WebServer::Any(const std::string& path, RequestHandler handler) {}
-void WebServer::Static(const std::string& url_path, const std::string& file_path) {}
+void WebServer::Stop() {
+    if (!running_) return;
+    
+    running_ = false;
+    //关闭监听事件
+    event_loop_.RemoveFd(listen_fd_);
+    close(listen_fd_);
+    
+    std::lock_guard<std::mutex> lock(connections_mutex_);
+    for (auto& [fd, conn] : connections_) {
+        conn->Close();
+    }
+    connections_.clear();
+}
+//处理新连接的callback函数
+void WebServer::HandleNewConnection(int listen_fd) {
+    sockaddr_in client_addr{};
+    socklen_t addr_len = sizeof(client_addr);
+    
+    int client_fd = accept4(listen_fd, reinterpret_cast<sockaddr*>(&client_addr), 
+                           &addr_len, SOCK_NONBLOCK);
+    if (client_fd < 0) {
+        if (on_error_callback_) {
+            on_error_callback_("Accept failed: " + std::string(strerror(errno)));
+        }
+        return;
+    }
 
-// 中间件方法
-void WebServer::Use(Middleware middleware) {}
-void WebServer::Use(const std::string& path, Middleware middleware) {}
+    auto conn = std::make_unique<Connection>(client_fd, *this);
 
-// 状态查询
-bool WebServer::IsRunning() const { return pimpl_->running_; }
-size_t WebServer::GetActiveConnections() const { return pimpl_->connections_.size(); }
-WebServer::Statistics WebServer::GetStatistics() const { return Statistics{}; }
+    //注册客户端连接的可读事件回调
+    event_loop_.AddFd(client_fd, EventLoop::EPOLL_READ | EventLoop::EPOLL_ET, 
+        [conn = conn.get()](int fd, uint32_t events) {
+            conn->HandleReadable();
+        });
+    
+    {
+        std::lock_guard<std::mutex> lock(connections_mutex_);
+        connections_[client_fd] = std::move(conn);
+    }
+    
+    if (on_connection_callback_) {
+        on_connection_callback_(*connections_[client_fd]);
+    }
+}
 
-// 事件回调
-void WebServer::SetOnConnection(std::function<void(Connection&)> callback) {}
-void WebServer::SetOnDisconnection(std::function<void(Connection&)> callback) {}
-void WebServer::SetOnError(std::function<void(const std::string&)> callback) {}
+void WebServer::Get(const std::string& path, RequestHandler handler) {
+    std::lock_guard<std::mutex> lock(routes_mutex_);
+    routes_["GET:" + path] = std::move(handler);
+}
+
+void WebServer::Post(const std::string& path, RequestHandler handler) {
+    std::lock_guard<std::mutex> lock(routes_mutex_);
+    routes_["POST:" + path] = std::move(handler);
+}
+
+void WebServer::Put(const std::string& path, RequestHandler handler) {
+    std::lock_guard<std::mutex> lock(routes_mutex_);
+    routes_["PUT:" + path] = std::move(handler);
+}
+
+void WebServer::Delete(const std::string& path, RequestHandler handler) {
+    std::lock_guard<std::mutex> lock(routes_mutex_);
+    routes_["DELETE:" + path] = std::move(handler);
+}
+
+void WebServer::Any(const std::string& path, RequestHandler handler) {
+    std::lock_guard<std::mutex> lock(routes_mutex_);
+    routes_["ANY:" + path] = std::move(handler);
+}
+
+void WebServer::Static(const std::string& url_path, const std::string& file_path) {
+    // 静态文件服务实现
+}
+
+void WebServer::Use(Middleware middleware) {
+    std::lock_guard<std::mutex> lock(middleware_mutex_);
+    global_middlewares_.push_back(std::move(middleware));
+}
+
+void WebServer::Use(const std::string& path, Middleware middleware) {
+    std::lock_guard<std::mutex> lock(middleware_mutex_);
+    route_middlewares_.emplace_back(path, std::move(middleware));
+}
+
+// ========== 状态查询 API ==========
+bool WebServer::IsRunning() const {
+    return running_;
+}
+
+size_t WebServer::GetActiveConnections() const {
+    std::lock_guard<std::mutex> lock(connections_mutex_);
+    return connections_.size();
+}
+
+WebServer::Statistics WebServer::GetStatistics() const {
+    Statistics stats;
+    stats.active_connections = GetActiveConnections();
+    return stats;
+}
+
+void WebServer::SetOnConnection(ConnectionCallback callback) {
+    on_connection_callback_ = std::move(callback);
+}
+
+void WebServer::SetOnDisconnection(ConnectionCallback callback) {
+    on_disconnection_callback_ = std::move(callback);
+}
+
+void WebServer::SetOnError(ErrorCallback callback) {
+    on_error_callback_ = std::move(callback);
+}
 
 } // namespace ppsever
