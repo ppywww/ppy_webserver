@@ -1,0 +1,3 @@
+/home/ppy001/project/ppserver/build/CMakeFiles/rebuild_cache.dir
+/home/ppy001/project/ppserver/build/CMakeFiles/edit_cache.dir
+/home/ppy001/project/ppserver/build/CMakeFiles/ppserver.dir
