@@ -1,10 +1,13 @@
-#include "core/web_server.hpp"
+#include "web_server.hpp"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <iostream>
+#include <memory>
 
+#include <cstring>
+#include <cerrno>
 namespace ppsever {
 
 WebServer::WebServer(const Config& config, ThreadPool& thread_pool, EventLoop& event_loop)
@@ -96,6 +99,10 @@ void WebServer::HandleNewConnection(int listen_fd) {
     }
 }
 
+HttpParser& WebServer::GetHttpParser(){
+        return http_parser_;
+    }
+
 void WebServer::Get(const std::string& path, RequestHandler handler) {
     std::lock_guard<std::mutex> lock(routes_mutex_);
     routes_["GET:" + path] = std::move(handler);
@@ -150,16 +157,15 @@ WebServer::Statistics WebServer::GetStatistics() const {
     stats.active_connections = GetActiveConnections();
     return stats;
 }
-
-void WebServer::SetOnConnection(ConnectionCallback callback) {
+void WebServer::SetOnConnection(std::function<void(Connection&)> callback) {
     on_connection_callback_ = std::move(callback);
 }
 
-void WebServer::SetOnDisconnection(ConnectionCallback callback) {
+void WebServer::SetOnDisconnection(std::function<void(Connection&)> callback) {
     on_disconnection_callback_ = std::move(callback);
 }
 
-void WebServer::SetOnError(ErrorCallback callback) {
+void WebServer::SetOnError(std::function<void(const std::string&)> callback) {
     on_error_callback_ = std::move(callback);
 }
 

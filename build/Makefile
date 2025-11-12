@@ -204,6 +204,87 @@ src/core/event_loop.cpp.s:
 	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/event_loop.cpp.s
 .PHONY : src/core/event_loop.cpp.s
 
+src/core/http_parser.o: src/core/http_parser.cpp.o
+
+.PHONY : src/core/http_parser.o
+
+# target to build an object file
+src/core/http_parser.cpp.o:
+	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/http_parser.cpp.o
+.PHONY : src/core/http_parser.cpp.o
+
+src/core/http_parser.i: src/core/http_parser.cpp.i
+
+.PHONY : src/core/http_parser.i
+
+# target to preprocess a source file
+src/core/http_parser.cpp.i:
+	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/http_parser.cpp.i
+.PHONY : src/core/http_parser.cpp.i
+
+src/core/http_parser.s: src/core/http_parser.cpp.s
+
+.PHONY : src/core/http_parser.s
+
+# target to generate assembly for a file
+src/core/http_parser.cpp.s:
+	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/http_parser.cpp.s
+.PHONY : src/core/http_parser.cpp.s
+
+src/core/http_request.o: src/core/http_request.cpp.o
+
+.PHONY : src/core/http_request.o
+
+# target to build an object file
+src/core/http_request.cpp.o:
+	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/http_request.cpp.o
+.PHONY : src/core/http_request.cpp.o
+
+src/core/http_request.i: src/core/http_request.cpp.i
+
+.PHONY : src/core/http_request.i
+
+# target to preprocess a source file
+src/core/http_request.cpp.i:
+	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/http_request.cpp.i
+.PHONY : src/core/http_request.cpp.i
+
+src/core/http_request.s: src/core/http_request.cpp.s
+
+.PHONY : src/core/http_request.s
+
+# target to generate assembly for a file
+src/core/http_request.cpp.s:
+	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/http_request.cpp.s
+.PHONY : src/core/http_request.cpp.s
+
+src/core/http_response.o: src/core/http_response.cpp.o
+
+.PHONY : src/core/http_response.o
+
+# target to build an object file
+src/core/http_response.cpp.o:
+	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/http_response.cpp.o
+.PHONY : src/core/http_response.cpp.o
+
+src/core/http_response.i: src/core/http_response.cpp.i
+
+.PHONY : src/core/http_response.i
+
+# target to preprocess a source file
+src/core/http_response.cpp.i:
+	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/http_response.cpp.i
+.PHONY : src/core/http_response.cpp.i
+
+src/core/http_response.s: src/core/http_response.cpp.s
+
+.PHONY : src/core/http_response.s
+
+# target to generate assembly for a file
+src/core/http_response.cpp.s:
+	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/http_response.cpp.s
+.PHONY : src/core/http_response.cpp.s
+
 src/core/main.o: src/core/main.cpp.o
 
 .PHONY : src/core/main.o
@@ -230,6 +311,33 @@ src/core/main.s: src/core/main.cpp.s
 src/core/main.cpp.s:
 	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/main.cpp.s
 .PHONY : src/core/main.cpp.s
+
+src/core/thread_pool.o: src/core/thread_pool.cpp.o
+
+.PHONY : src/core/thread_pool.o
+
+# target to build an object file
+src/core/thread_pool.cpp.o:
+	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/thread_pool.cpp.o
+.PHONY : src/core/thread_pool.cpp.o
+
+src/core/thread_pool.i: src/core/thread_pool.cpp.i
+
+.PHONY : src/core/thread_pool.i
+
+# target to preprocess a source file
+src/core/thread_pool.cpp.i:
+	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/thread_pool.cpp.i
+.PHONY : src/core/thread_pool.cpp.i
+
+src/core/thread_pool.s: src/core/thread_pool.cpp.s
+
+.PHONY : src/core/thread_pool.s
+
+# target to generate assembly for a file
+src/core/thread_pool.cpp.s:
+	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/thread_pool.cpp.s
+.PHONY : src/core/thread_pool.cpp.s
 
 src/core/web_server.o: src/core/web_server.cpp.o
 
@@ -276,9 +384,21 @@ help:
 	@echo "... src/core/event_loop.o"
 	@echo "... src/core/event_loop.i"
 	@echo "... src/core/event_loop.s"
+	@echo "... src/core/http_parser.o"
+	@echo "... src/core/http_parser.i"
+	@echo "... src/core/http_parser.s"
+	@echo "... src/core/http_request.o"
+	@echo "... src/core/http_request.i"
+	@echo "... src/core/http_request.s"
+	@echo "... src/core/http_response.o"
+	@echo "... src/core/http_response.i"
+	@echo "... src/core/http_response.s"
 	@echo "... src/core/main.o"
 	@echo "... src/core/main.i"
 	@echo "... src/core/main.s"
+	@echo "... src/core/thread_pool.o"
+	@echo "... src/core/thread_pool.i"
+	@echo "... src/core/thread_pool.s"
 	@echo "... src/core/web_server.o"
 	@echo "... src/core/web_server.i"
 	@echo "... src/core/web_server.s"

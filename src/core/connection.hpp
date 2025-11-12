@@ -13,23 +13,20 @@
 #include <fcntl.h>
 #include <ctime>
 #include <iostream>
-#include "core/http_request.hpp"
-#include "core/http_response.hpp"
+#include "http_request.hpp"
+#include "http_response.hpp"
+#include "http_parser.hpp"
+#include "handler.hpp"
 
 namespace ppsever {
 
-// 前置声明
+
 class WebServer;
 class EventLoop;
 
-/**
- * Connection - TCP连接管理类
- * 职责：封装单个TCP连接的生命周期、数据读写和协议处理
- * 特性：线程安全、资源自动管理、边缘触发优化、超时控制
- */
 class Connection : public std::enable_shared_from_this<Connection> {//使得类的实例能够安全地生成指向自身的shared_ptr
 public:
-    // 连接状态枚举
+  
     enum class State {
         DISCONNECTED,   // 未连接状态
         CONNECTING,     // 连接建立中
@@ -39,23 +36,32 @@ public:
         CLOSING         // 连接关闭中
     };
 
-    // 构造函数与析构函数
     Connection(int socket_fd, WebServer& server);
+
     ~Connection();
     Connection(const Connection&) = delete;
     Connection& operator=(const Connection&) = delete;
     Connection(Connection&&) = delete;
     Connection& operator=(Connection&&) = delete;
 
-    // 生命周期管理
+
     void Start();
     void Close();
-    void Shutdown();
+
+
+    // 设置处理器
+    void SetHandler(std::shared_ptr<Handler> handler) {
+        handler_ = handler;
+    }
 
     // 数据读写操作
     ssize_t ReadData();
     ssize_t WriteData(const std::string& data);
     bool TryParseHttpRequest();
+
+    // 获取数据接口
+    std::string GetReadBuffer() const;
+    void ClearReadBuffer();
 
     // 状态查询与信息获取
     State GetState() const;
@@ -80,27 +86,33 @@ public:
     void SetTimeout(int seconds);
     void SetMaxBufferSize(size_t size);
 
+
 private:
     // 内部辅助方法
     void SetupSocketOptions();
     void UpdateActivityTime();
     void CleanupResources();
     void NotifyError(const std::string& error_msg);
-    void SendResponse();
+
+
+    
+    // 默认事件处理方法
+    void DefaultHandleRead();
+    void DefaultHandleWrite();
+    void DefaultHandleError();
+
 
     // 成员变量
     int socket_fd_;                         // 套接字文件描述符
     State state_;                           // 当前连接状态
     WebServer& server_;                     // 所属服务器引用
     EventLoop& event_loop_;                 // 事件循环引用
+
+    std::shared_ptr<Handler> handler_;     // 连接处理器
     
     // 数据缓冲区
     std::string read_buffer_;               // 读数据缓冲区
     std::string write_buffer_;              // 写数据缓冲区
-    
-    // HTTP协议处理
-    std::unique_ptr<HttpRequest> current_request_;
-    std::unique_ptr<HttpResponse> current_response_;
     
     // 回调函数
     std::function<void()> read_callback_;
@@ -119,6 +131,8 @@ private:
     
     // 线程安全
     mutable std::mutex buffer_mutex_;      // 缓冲区访问互斥锁
+
+ 
 };
 
 } // namespace ppsever

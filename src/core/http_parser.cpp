@@ -17,9 +17,15 @@ HttpParser::HttpParser()
     request_ = std::make_unique<HttpRequest>();
 }
 
+// ... existing code ...
 ParseResult HttpParser::Parse(const char* data, size_t len) {
     if (len == 0 || data == nullptr) {
-        return ParseResult{false, state_, total_bytes_parsed_, "Invalid input data"};
+        ParseResult result;
+        result.success = false;
+        result.state = state_;
+        result.bytes_parsed = total_bytes_parsed_;
+        result.error_message = "Invalid input data";
+        return result;
     }
     
     // 将新数据追加到缓冲区（处理跨数据包的情况）
@@ -80,12 +86,17 @@ ParseResult HttpParser::Parse(const char* data, size_t len) {
     
     return result;
 }
-
+// ... existing code ...
 ParseResult HttpParser::ParseStartLine(const char* data, size_t len, size_t& pos) {
     // 查找请求行结束标记（CRLF）
     size_t line_end = FindCRLF(data, len, pos);
     if (line_end == std::string::npos) {
-        return ParseResult{true, state_, total_bytes_parsed_, ""}; // 需要更多数据
+        ParseResult result;
+        result.success = true;
+        result.state = state_;
+        result.bytes_parsed = total_bytes_parsed_;
+        result.error_message = "";
+        return result; // 需要更多数据
     }
     
     // 提取整行数据
@@ -98,36 +109,63 @@ ParseResult HttpParser::ParseStartLine(const char* data, size_t len, size_t& pos
     
     if (!(iss >> method >> path >> version)) {
         HandleError("Malformed request line");
-        return ParseResult{false, state_, total_bytes_parsed_, "Invalid request line format"};
+        ParseResult result;
+        result.success = false;
+        result.state = state_;
+        result.bytes_parsed = total_bytes_parsed_;
+        result.error_message = "Invalid request line format";
+        return result;
     }
     
     // 验证HTTP方法和版本
     if (!ValidateHttpMethod(method)) {
         HandleError("Unsupported HTTP method: " + method);
-        return ParseResult{false, state_, total_bytes_parsed_, "Unsupported HTTP method"};
+        ParseResult result;
+        result.success = false;
+        result.state = state_;
+        result.bytes_parsed = total_bytes_parsed_;
+        result.error_message = "Unsupported HTTP method";
+        return result;
     }
     
     if (!ValidateHttpVersion(version)) {
         HandleError("Unsupported HTTP version: " + version);
-        return ParseResult{false, state_, total_bytes_parsed_, "Unsupported HTTP version"};
+        ParseResult result;
+        result.success = false;
+        result.state = state_;
+        result.bytes_parsed = total_bytes_parsed_;
+        result.error_message = "Unsupported HTTP version";
+        return result;
     }
     
     // 设置请求对象
-    request_->SetMethod(method);
+    request_->SetMethod(StringToMethod(method));
     request_->SetPath(path);
-    request_->SetVersion(version);
+    request_->SetVersion(StringToVersion(version));
     
     // 转换到头部解析状态
     TransitionTo(ParseState::HEADERS);
-    return ParseResult{true, state_, total_bytes_parsed_, ""};
+    
+    ParseResult result;
+    result.success = true;
+    result.state = state_;
+    result.bytes_parsed = total_bytes_parsed_;
+    result.error_message = "";
+    return result;
 }
 
 ParseResult HttpParser::ParseHeaders(const char* data, size_t len, size_t& pos) {
+    ParseResult result;
+    result.success = true;
+    result.state = state_;
+    result.bytes_parsed = total_bytes_parsed_;
+    result.error_message = "";
+    
     while (pos < len) {
         // 查找行结束标记
         size_t line_end = FindCRLF(data, len, pos);
         if (line_end == std::string::npos) {
-            return ParseResult{true, state_, total_bytes_parsed_, ""}; // 需要更多数据
+            return result; // 需要更多数据
         }
         
         // 空行表示头部结束
@@ -144,7 +182,9 @@ ParseResult HttpParser::ParseHeaders(const char* data, size_t len, size_t& pos) 
                     TransitionTo(ParseState::BODY);
                 } catch (const std::exception&) {
                     HandleError("Invalid Content-Length header");
-                    return ParseResult{false, state_, total_bytes_parsed_, "Invalid Content-Length"};
+                    result.success = false;
+                    result.error_message = "Invalid Content-Length";
+                    return result;
                 }
             } else if (transfer_encoding == "chunked") {
                 chunked_encoding_ = true;
@@ -163,7 +203,11 @@ ParseResult HttpParser::ParseHeaders(const char* data, size_t len, size_t& pos) 
         size_t colon_pos = line.find(':');
         if (colon_pos == std::string::npos) {
             HandleError("Malformed header: " + line);
-            return ParseResult{false, state_, total_bytes_parsed_, "Invalid header format"};
+            result.success = false;
+            result.state = state_;
+            result.bytes_parsed = total_bytes_parsed_;
+            result.error_message = "Invalid header format";
+            return result;
         }
         
         std::string name = line.substr(0, colon_pos);
@@ -178,10 +222,16 @@ ParseResult HttpParser::ParseHeaders(const char* data, size_t len, size_t& pos) 
         request_->AddHeader(name, value);
     }
     
-    return ParseResult{true, state_, total_bytes_parsed_, ""};
+    return result;
 }
 
 ParseResult HttpParser::ParseBody(const char* data, size_t len, size_t& pos) {
+    ParseResult result;
+    result.success = true;
+    result.state = state_;
+    result.bytes_parsed = total_bytes_parsed_;
+    result.error_message = "";
+    
     size_t bytes_remaining = len - pos;
     size_t bytes_needed = content_length_ - request_->GetBody().size();
     
@@ -196,16 +246,22 @@ ParseResult HttpParser::ParseBody(const char* data, size_t len, size_t& pos) {
         pos += bytes_remaining;
     }
     
-    return ParseResult{true, state_, total_bytes_parsed_, ""};
+    return result;
 }
 
 ParseResult HttpParser::ParseChunkedBody(const char* data, size_t len, size_t& pos) {
+    ParseResult result;
+    result.success = true;
+    result.state = state_;
+    result.bytes_parsed = total_bytes_parsed_;
+    result.error_message = "";
+    
     while (pos < len) {
         if (!chunk_size_parsed_) {
             // 解析分块大小行
             size_t line_end = FindCRLF(data, len, pos);
             if (line_end == std::string::npos) {
-                return ParseResult{true, state_, total_bytes_parsed_, ""}; // 需要更多数据
+                return result; // 需要更多数据
             }
             
             std::string chunk_size_line(data + pos, line_end - pos);
@@ -223,7 +279,11 @@ ParseResult HttpParser::ParseChunkedBody(const char* data, size_t len, size_t& p
                 }
             } catch (const std::exception&) {
                 HandleError("Invalid chunk size: " + chunk_size_line);
-                return ParseResult{false, state_, total_bytes_parsed_, "Invalid chunk size"};
+                result.success = false;
+                result.state = state_;
+                result.bytes_parsed = total_bytes_parsed_;
+                result.error_message = "Invalid chunk size";
+                return result;
             }
         } else {
             // 解析分块数据
@@ -246,28 +306,10 @@ ParseResult HttpParser::ParseChunkedBody(const char* data, size_t len, size_t& p
         }
     }
     
-    return ParseResult{true, state_, total_bytes_parsed_, ""};
+    return result;
 }
 
-std::unique_ptr<HttpRequest> HttpParser::GetRequest() {
-    if (state_ == ParseState::COMPLETE) {
-        return std::move(request_);
-    }
-    return nullptr;
-}
-
-void HttpParser::Reset() {
-    state_ = ParseState::START_LINE;
-    request_ = std::make_unique<HttpRequest>();
-    content_length_ = 0;
-    chunked_encoding_ = false;
-    buffer_.clear();
-    total_bytes_parsed_ = 0;
-    current_chunk_size_ = 0;
-    chunk_size_parsed_ = false;
-}
-
-// 辅助方法实现
+// 添加缺失的辅助函数实现
 size_t HttpParser::FindCRLF(const char* data, size_t len, size_t start_pos) const {
     for (size_t i = start_pos; i + 1 < len; ++i) {
         if (data[i] == '\r' && data[i + 1] == '\n') {
@@ -277,16 +319,22 @@ size_t HttpParser::FindCRLF(const char* data, size_t len, size_t start_pos) cons
     return std::string::npos;
 }
 
-bool HttpParser::ValidateHttpVersion(const std::string& version) const {
-    return version == "HTTP/1.0" || version == "HTTP/1.1";
+bool HttpParser::ValidateHttpMethod(const std::string& method) const {
+    // 检查是否为有效的HTTP方法
+    static const std::unordered_set<std::string> valid_methods = {
+        "GET", "POST", "PUT", "DELETE", "HEAD", "OPTIONS", "PATCH", "TRACE", "CONNECT"
+    };
+    
+    return valid_methods.find(method) != valid_methods.end();
 }
 
-bool HttpParser::ValidateHttpMethod(const std::string& method) const {
-    static const std::unordered_map<std::string, bool> valid_methods = {
-        {"GET", true}, {"POST", true}, {"PUT", true}, {"DELETE", true},
-        {"HEAD", true}, {"OPTIONS", true}, {"PATCH", true}, {"TRACE", true}
+bool HttpParser::ValidateHttpVersion(const std::string& version) const {
+    // 检查是否为有效的HTTP版本
+    static const std::unordered_set<std::string> valid_versions = {
+        "HTTP/1.0", "HTTP/1.1", "HTTP/2.0"
     };
-    return valid_methods.find(method) != valid_methods.end();
+    
+    return valid_versions.find(version) != valid_versions.end();
 }
 
 void HttpParser::TransitionTo(ParseState new_state) {
@@ -295,7 +343,23 @@ void HttpParser::TransitionTo(ParseState new_state) {
 
 void HttpParser::HandleError(const std::string& message) {
     state_ = ParseState::ERROR;
+    // 可以在这里添加错误日志记录
     std::cerr << "HTTP Parser Error: " << message << std::endl;
+}
+
+std::unique_ptr<HttpRequest> HttpParser::GetRequest() {
+    return std::move(request_);
+}
+
+void HttpParser::Reset() {
+    state_ = ParseState::START_LINE;
+    content_length_ = 0;
+    chunked_encoding_ = false;
+    buffer_.clear();
+    total_bytes_parsed_ = 0;
+    current_chunk_size_ = 0;
+    chunk_size_parsed_ = false;
+    request_ = std::make_unique<HttpRequest>();
 }
 
 bool HttpParser::IsParsing() const {
@@ -306,4 +370,4 @@ ParseState HttpParser::GetCurrentState() const {
     return state_;
 }
 
-} // namespace ppsever
+}

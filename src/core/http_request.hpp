@@ -11,23 +11,23 @@
 
 namespace ppsever {
 
-/**
- * HttpRequest - HTTP请求封装类
- * 职责：封装HTTP请求的所有组成部分，提供结构化访问接口
- * 特性：不可变数据模型、高效查询接口、协议完整性支持
- */
 class HttpRequest {
 public:
     // HTTP方法枚举（支持RFC 7231定义的所有方法）
     enum class Method {
         GET, POST, PUT, DELETE, HEAD, OPTIONS, PATCH, TRACE, CONNECT, UNKNOWN
     };
-    
     // HTTP版本枚举
     enum class Version {
         HTTP_1_0, HTTP_1_1, HTTP_2_0, UNKNOWN
     };
 
+    //  // HTTP方法字符串映射
+    static const std::unordered_map<Method, std::string> METHOD_STRINGS;
+    static const std::unordered_map<Version, std::string> VERSION_STRINGS;
+
+    
+    
     // 构造函数与析构函数
     HttpRequest();
     ~HttpRequest() = default;
@@ -139,9 +139,7 @@ private:
 
     // 常量字符串
     static const std::string EMPTY_STRING;
-    static const std::unordered_map<Method, std::string> METHOD_STRINGS;
-    static const std::unordered_map<Version, std::string> VERSION_STRINGS;
-
+ 
     // 辅助方法
     std::string ToLower(const std::string& str) const;
     void ParseQueryString(const std::string& query);

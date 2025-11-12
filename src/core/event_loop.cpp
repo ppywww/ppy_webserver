@@ -1,7 +1,14 @@
-#include "core/event_loop.hpp"
+#include "event_loop.hpp"
 #include <system_error>
 #include <fcntl.h>
 #include <cstring>
+#include <algorithm> 
+#include <iostream>
+#include <sys/eventfd.h>
+#include <sys/epoll.h>
+
+#include <functional>     // 用于 std::function
+#include <unistd.h>
 
 namespace ppsever {
 
@@ -98,7 +105,7 @@ bool EventLoop::IsInLoopThread() const {
 }
 
 void EventLoop::AddFd(int fd, uint32_t events, EventCallback callback) {
-    std::lock_guard<std::mutex> lock(fd_mutex_);//保护共享资源 fd_callbacks_（文件描述符回调映射）的线程安全访问
+    std::lock_guard<std::recursive_mutex> lock(fd_mutex_);//保护共享资源 fd_callbacks_（文件描述符回调映射）的线程安全访问
     
     // 设置边缘触发模式
     events |= EPOLL_ET;//uint32_t类型的位掩码（bitmask），用于指定要监控的事件类型
@@ -113,7 +120,49 @@ void EventLoop::AddFd(int fd, uint32_t events, EventCallback callback) {
     }
     
     fd_callbacks_[fd] = std::move(callback);
+
+
 }
+//==================================重入锁问题 使用递归锁==================================
+// void EventLoop::AddFd(int fd, uint32_t events, EventCallback callback) {
+//     std::cout << "🔄 进入 AddFd，线程ID: " << std::this_thread::get_id() 
+//               << ", 文件描述符: " << fd << std::endl;
+    
+//     auto start_time = std::chrono::steady_clock::now();
+    
+    
+//     {
+//         std::cout << "🔒 尝试获取 fd_mutex_..." << std::endl;
+//         std::lock_guard<std::recursive_mutex> lock(fd_mutex_);
+//         std::cout << "✅ 成功获取 fd_mutex_" << std::endl;
+        
+//         // 设置边缘触发模式
+//         events |= EPOLL_ET;
+        
+//         epoll_event event{};
+//         event.events = events;
+//         event.data.fd = fd;
+        
+//         std::cout << "🔧 准备调用 epoll_ctl，epoll_fd: " << epoll_fd_ 
+//                   << ", 目标fd: " << fd << std::endl;
+        
+//         if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, fd, &event) < 0) {
+//             std::string error_msg = "Failed to add fd to epoll: " + std::string(strerror(errno));
+//             std::cerr << "❌ " << error_msg << std::endl;
+//             throw std::runtime_error(error_msg);
+//         }
+        
+//         std::cout << "✅ epoll_ctl 调用成功" << std::endl;
+        
+//         fd_callbacks_[fd] = std::move(callback);
+//         std::cout << "✅ 回调函数注册成功" << std::endl;
+   
+//     }
+    
+//     auto end_time = std::chrono::steady_clock::now();
+//     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+//     std::cout << "⏱️  AddFd 完成，耗时: " << duration.count() << "ms" << std::endl;
+// }
 
 void EventLoop::UpdateFd(int fd, uint32_t events) {
     epoll_event event{};
@@ -127,7 +176,7 @@ void EventLoop::UpdateFd(int fd, uint32_t events) {
 }
 
 void EventLoop::RemoveFd(int fd) {
-    std::lock_guard<std::mutex> lock(fd_mutex_);
+    std::lock_guard<std::recursive_mutex> lock(fd_mutex_);
     
     if (epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, fd, nullptr) < 0) {
         // 记录警告但继续执行（可能fd已关闭）
@@ -141,10 +190,10 @@ void EventLoop::RemoveFd(int fd) {
 
 EventLoop::TimerId EventLoop::RunAfter(uint64_t delay_ms, Task callback) {//返回类型为 TimerId，即定时器的唯一标识符
     //传入delay_ms参数
-    std::lock_guard<std::mutex> lock(timer_mutex_);std::lock_guard<std::mutex>
-    //这是操作最小堆的互斥锁，确保对定时器队列的线程安全访问
+    std::lock_guard<std::mutex> lock(timer_mutex_);
+   
 
-    Timer timer;
+        Timer timer;
     timer.id = next_timer_id_++;
     timer.expiration = GetCurrentTimeMs() + delay_ms;//计算过期时间
     timer.interval = 0;//间隔时间是0，表示一次性定时器
@@ -197,7 +246,7 @@ void EventLoop::RunInLoop(Task task) {
 
 void EventLoop::QueueInLoop(Task task) {
     {
-        std::lock_guard<std::mutex> lock(task_mutex_);
+        std::lock_guard<std::recursive_mutex> lock(task_mutex_);
         pending_tasks_.push_back(std::move(task));
     }
     WakeUp(); // 唤醒事件循环处理新任务
@@ -206,12 +255,12 @@ void EventLoop::QueueInLoop(Task task) {
 EventLoop::Statistics EventLoop::GetStatistics() const {
     Statistics stats;
     {
-        std::lock_guard<std::mutex> lock(fd_mutex_);//保护fd_callbacks_的互斥锁
+        std::lock_guard<std::recursive_mutex> lock(fd_mutex_);//保护fd_callbacks_的互斥锁
         //将所有对同一个 epfd 的 epoll_ctl 操作，串行化到同一个线程（通常是事件循环线程）执行，避免多线程直接调用 epoll_ctl。
         stats.active_fd_count = fd_callbacks_.size();
     }
     {
-        std::lock_guard<std::mutex> lock(task_mutex_);//保护任务队列的互斥锁
+        std::lock_guard<std::recursive_mutex> lock(task_mutex_);//保护任务队列的互斥锁
         stats.pending_tasks = pending_tasks_.size();
     }
     {
@@ -281,7 +330,7 @@ void EventLoop::ProcessExpiredTimers() {
 void EventLoop::ProcessPendingTasks() {
     std::vector<Task> tasks;
     {
-        std::lock_guard<std::mutex> lock(task_mutex_);
+        std::lock_guard<std::recursive_mutex> lock(task_mutex_);
         tasks.swap(pending_tasks_); // 批量取出所有任务
     }
     
@@ -311,7 +360,7 @@ void EventLoop::WakeUp() {
 }
 
 void EventLoop::HandleIoEvent(const epoll_event& event) {
-    std::lock_guard<std::mutex> lock(fd_mutex_);
+    std::lock_guard<std::recursive_mutex> lock(fd_mutex_);
     auto it = fd_callbacks_.find(event.data.fd);
     if (it != fd_callbacks_.end()) {
         try {

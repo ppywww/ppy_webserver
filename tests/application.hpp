@@ -13,7 +13,7 @@ public:
     // 获取各组件实例
     class WebServer* GetWebServer() const;
     class ThreadPool* GetThreadPool() const;
-    class EventLoop* GetEventLoop() const;
+    // class EventLoop* GetEventLoop() const;
 };
 
 } // namespace ppsever

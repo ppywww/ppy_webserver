@@ -36,7 +36,8 @@ public:
 
     EventLoop();
  
-    ~EventLoop()
+    ~EventLoop();
+    
     EventLoop(const EventLoop&) = delete;
     EventLoop& operator=(const EventLoop&) = delete;
     EventLoop(EventLoop&&) = delete;
@@ -70,7 +71,7 @@ public:
     };
     Statistics GetStatistics() const;
 
-private:
+   
     // 定时器结构
     struct Timer {
         TimerId id;
@@ -86,6 +87,10 @@ private:
             }
         };
     };
+ 
+
+private:
+    
 
     // 辅助方法
     uint64_t GetCurrentTimeMs() const;
@@ -104,7 +109,7 @@ private:
 
     // 文件描述符回调映射
     std::unordered_map<int, EventCallback> fd_callbacks_;
-    mutable std::mutex fd_mutex_;     // FD映射的互斥锁
+    mutable std::recursive_mutex fd_mutex_;     // FD映射的互斥锁
 
     // 定时器队列（最小堆）
     std::vector<Timer> timers_;
@@ -113,7 +118,7 @@ private:
 
     // 任务队列
     std::vector<Task> pending_tasks_;//
-    mutable std::mutex task_mutex_;   // 任务队列的互斥锁
+    mutable std::recursive_mutex task_mutex_;   // 任务队列的互斥锁
 };
 
 } // namespace ppsever
