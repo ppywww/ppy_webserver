@@ -8,6 +8,7 @@
 #include <mutex>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include<netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -17,12 +18,14 @@
 #include "http_response.hpp"
 #include "http_parser.hpp"
 #include "handler.hpp"
-
-namespace ppsever {
+#include "connection.hpp"
+#include "connection_manager.hpp"
+namespace ppserver {
 
 
 class WebServer;
 class EventLoop;
+class Handler;
 
 class Connection : public std::enable_shared_from_this<Connection> {//使得类的实例能够安全地生成指向自身的shared_ptr
 public:
@@ -50,9 +53,7 @@ public:
 
 
     // 设置处理器
-    void SetHandler(std::shared_ptr<Handler> handler) {
-        handler_ = handler;
-    }
+    void SetHandler(std::shared_ptr<Handler> handler) ;
 
     // 数据读写操作
     ssize_t ReadData();
@@ -86,6 +87,12 @@ public:
     void SetTimeout(int seconds);
     void SetMaxBufferSize(size_t size);
 
+        // 默认事件处理方法
+    void DefaultHandleRead();
+    void DefaultHandleWrite();
+    void DefaultHandleError();
+
+
 
 private:
     // 内部辅助方法
@@ -96,10 +103,6 @@ private:
 
 
     
-    // 默认事件处理方法
-    void DefaultHandleRead();
-    void DefaultHandleWrite();
-    void DefaultHandleError();
 
 
     // 成员变量
@@ -110,6 +113,9 @@ private:
 
     std::shared_ptr<Handler> handler_;     // 连接处理器
     
+    // HTTP解析器
+    HttpParser http_parser_;                // HTTP解析器实例
+
     // 数据缓冲区
     std::string read_buffer_;               // 读数据缓冲区
     std::string write_buffer_;              // 写数据缓冲区

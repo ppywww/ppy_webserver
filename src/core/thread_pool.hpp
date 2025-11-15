@@ -9,10 +9,10 @@
 #include <vector>
 // #include "connection_manager.hpp"
 
-namespace ppsever {
+namespace ppserver {
 class ThreadPool {
 public:
-    using Task = std::function<void()>;
+    using Task = std::function<void()>;//uring引入std::function
     
     // 配置结构
     struct Config_thread_pool {
@@ -20,9 +20,13 @@ public:
         size_t max_threads = 16;      // 最大线程数
         size_t max_tasks = 1000;      // 任务队列容量
         std::chrono::seconds keep_alive_time{60}; // 空闲线程存活时间
+        //std::chrono::seconds是std::chrono::duration的子类，用于表示一段时间，比如1秒、1分、1天等。
     };
+
+
     
-    explicit ThreadPool(const Config_thread_pool& config);
+    
+    explicit ThreadPool(const Config_thread_pool& config );
     ~ThreadPool();
     
     // 提交任务，返回future获取结果
@@ -59,7 +63,7 @@ template<typename F, typename... Args>
 auto ThreadPool::Submit(F&& f, Args&&... args) 
     -> std::future<typename std::result_of<F(Args...)>::type> {
     
-    using return_type = typename std::result_of<F(Args...)>::type;
+    using return_type = typename std::result_of<F(Args...)>::type;//uring声明
     
     auto task = std::make_shared<std::packaged_task<return_type()>>(
         std::bind(std::forward<F>(f), std::forward<Args>(args)...)
@@ -78,7 +82,7 @@ auto ThreadPool::Submit(F&& f, Args&&... args)
         tasks_.emplace([task]() { (*task)(); });
     }
     
-    condition_.notify_one();
+    condition_.notify_one();//唤醒一个线程在队列中等待的任务
     return res;
 }
 

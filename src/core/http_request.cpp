@@ -6,7 +6,7 @@
 #include <iostream>
 
 
-namespace ppsever {
+namespace ppserver {
 
 // 静态常量初始化
 const std::string HttpRequest::EMPTY_STRING = "";

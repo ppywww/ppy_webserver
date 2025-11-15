@@ -1,9 +1,12 @@
 #include "thread_pool.hpp"
 #include <iostream>
 
-namespace ppsever {
+namespace ppserver {
 
-ThreadPool::ThreadPool(const Config_thread_pool& config) 
+
+
+
+ThreadPool::ThreadPool(const Config_thread_pool& config ) 
     : config_(config), 
       shutdown_(false) {
     
@@ -76,14 +79,14 @@ size_t ThreadPool::GetActiveThreadCount() const {
     return threads_.size();
 }
 
-bool ThreadPool::SetCoreThreadSize(size_t num) {
-    // 简化实现，实际项目中需要更复杂的线程管理逻辑
-    return true;
-}
+// bool ThreadPool::SetCoreThreadSize(size_t num) {
+//     // 简化实现，实际项目中需要更复杂的线程管理逻辑
+//     return true;
+// }
 
-bool ThreadPool::SetMaxThreadSize(size_t num) {
-    // 简化实现，实际项目中需要更复杂的线程管理逻辑
-    return true;
-}
+// bool ThreadPool::SetMaxThreadSize(size_t num) {
+//     // 简化实现，实际项目中需要更复杂的线程管理逻辑
+//     return true;
+// }
 
 } // namespace ppsever

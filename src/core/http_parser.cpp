@@ -4,7 +4,7 @@
 #include <sstream>
 #include <iostream>
 
-namespace ppsever {
+namespace ppserver {
 
 HttpParser::HttpParser() 
     : state_(ParseState::START_LINE),

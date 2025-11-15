@@ -1,116 +1,85 @@
 #include <iostream>
 #include <memory>
-#include <thread>
-#include <chrono>
-#include <cstring>
-#include <system_error>
+#include <string>
+#include <fstream>
 #include <sstream>
-#include <signal.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <fcntl.h>
-
+#include "web_server.hpp"
 #include "event_loop.hpp"
-#include "connection.hpp"
 #include "connection_manager.hpp"
+#include "connection.hpp"
+#include "http_request.hpp"
+#include "http_response.hpp"
 
-using namespace ppsever;
-
-
-
+using namespace ppserver;
 
 int main() {
-    std::cout << "==========================================" << std::endl;
-    std::cout << "           Web服务器功能测试              " << std::endl;
-    std::cout << "==========================================" << std::endl;
-    
-    uint16_t PORT = 8888;
- 
-    
     try {
-        // 创建事件循环和线程池
+        // 创建事件循环
         EventLoop event_loop;
-        // 创建4个线程的线程池
         
-        // 配置Web服务器
-     
-       ThreadPool::Config_thread_pool thread_config;
-        thread_config.core_threads = 4;
+        // 创建连接管理器
+        ConnectionManager conn_manager; 
         
         // 创建线程池
-        ThreadPool thread_pool(thread_config);
-
-        ppsever::WebServer::Config config;
-        config.port = PORT;
-        config.host = "192.168.125.128";
+        ThreadPool thread_pool({4, 16, 1000, std::chrono::seconds(60)});
         
-        // 创建Web服务器实例
-        ppsever::WebServer server(config, thread_pool, event_loop);
-        
-
-
-        
-        // 注册简单的路由处理函数
-        server.Get("/", [](std::unique_ptr<HttpRequest> req) {
-            auto response = std::make_unique<HttpResponse>();
-            response->SetStatusCode(HttpResponse::HttpStatusCode::OK);
-            response->SetHeader("Content-Type", "text/html; charset=utf-8");
-            response->SetBody("<h1>欢迎使用PPServer!</h1><p>这是一个简单的Web服务器测试页面。</p>");
-            return response;
-        });
-        
-        server.Get("/echo", [&server](std::unique_ptr<HttpRequest> req) {
-            auto response = std::make_unique<HttpResponse>();
-            response->SetStatusCode(HttpResponse::HttpStatusCode::OK);
-            response->SetHeader("Content-Type", "text/plain; charset=utf-8");
-            
-            std::string body = "Echo Server Running!\n";
-            body += "当前活跃连接数: " + std::to_string(server.GetActiveConnections()) + "\n";
-            response->SetBody(body);
-            return response;
-        });
+        // 配置服务器
+        WebServer::Config config;
+        config.host = "127.0.0.1";
+        config.port = 8222;
+        config.max_connections = 1000;
+        config.backlog = 1024;
         
         // 启动服务器
+        std::cout << "Starting HTTP server on " << config.host << ":" << config.port << std::endl;
+        std::cout << "访问地址:  http://127.0.0.1:" <<config.port<<std::endl;
         bool server_started = false;
-        for (int attempts = 0; attempts < 10; ++attempts) {
-            config.port = PORT;
-            if (server.Start()) {
-                server_started = true;
-                break;
-            } else {
-                // 检查是否是地址已被使用错误
-                if (errno == EADDRINUSE) {
-                    std::cout << "⚠️  端口 " << PORT << " 已被占用，尝试端口 " << (PORT + 1) << std::endl;
-                    PORT++;
+
+         uint16_t original_port = config.port;
+        bool port_found = false;
+        if (conn_manager.IsPortAvailable(config.host, config.port)) {
+            std::cout << "Port " << config.port << " is available" << std::endl;
+            port_found = true;
+        } else {
+            std::cout << "Port " << config.port << " is not available, searching for alternatives..." << std::endl;
+            
+            // 尝试最多10个端口
+            for (int attempts = 1; attempts < 10; ++attempts) {
+                uint16_t new_port = original_port + attempts;
+                if (conn_manager.IsPortAvailable(config.host, new_port)) {
+                    std::cout << "Found available port: " << new_port << std::endl;
+                    const_cast<WebServer::Config&>(config).port = new_port;
+                    port_found = true;
+                    break;
                 } else {
-                    // 其他错误，直接退出
-                    std::cerr << "❌ 服务器启动失败: " << strerror(errno) << std::endl;
-                    return 1;
+                    std::cout << "Port " << new_port << " is also not available" << std::endl;
                 }
             }
         }
         
-        if (!server_started) {
+        if (!port_found) {
             std::cerr << "❌ 无法找到可用端口启动服务器" << std::endl;
             return 1;
         }
+
+         std::unique_ptr<WebServer> server = std::make_unique<WebServer>(
+           config, event_loop, conn_manager, thread_pool);
         
-        std::cout << "\n🎯 Web服务器运行中..." << std::endl;
-        std::cout << "💡 使用以下方式访问:" << std::endl;
-        std::cout << "   curl http://192.168.125.128:" << PORT << "/" << std::endl;
-        std::cout << "   curl http://192.168.125.128:" << PORT << "/echo" << std::endl;
-        std::cout << "   或在浏览器中访问上述地址" << std::endl;
-        std::cout << "   Ctrl+C 退出服务器" << std::endl;
-        std::cout << "==========================================" << std::endl;
+        // 设置信号处理
+        server->SetSignalHandlers();
         
-        // 运行事件循环
+        // 服务器启动成功后再输出最终的访问地址
+        std::cout << "✅ HTTP server successfully started on " << config.host << ":" << config.port << std::endl;
+        std::cout << "访问地址:  http://127.0.0.1:" <<config.port<<std::endl;
+        std::cout << "curl 测试命令:  curl http://127.0.0.1:" <<config.port<<"/"<<std::endl;
+        std::cout << "curl 测试命令:  curl http://127.0.0.1:" <<config.port<<"/index.html"<<std::endl;
+        std::cout << "curl 测试命令:  telnet 127.0.0.1 " <<config.port<<std::endl;
+          
         event_loop.Run();
-        return 0;
-        
-    } catch (const std::exception& e) {
-        std::cerr << "❌ 服务器异常: " << e.what() << std::endl;
+    
+    return 0;
+}   catch (const std::exception& ex) {
+        std::cerr << "Exception: " << ex.what() << std::endl;
         return 1;
     }
 }

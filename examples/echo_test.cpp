@@ -324,7 +324,7 @@ int main() {
         
         // 尝试启动服务器，如果端口被占用则尝试下一个端口
         for (int attempts = 0; attempts < 10; ++attempts) {
-            server = std::make_unique<EchoServer>(PORT);//==================什么指针？
+            server = std::make_unique<EchoServer>(PORT);
             
             if (server->Start()) {
                 server_started = true;

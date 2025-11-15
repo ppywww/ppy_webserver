@@ -1,6 +1,6 @@
 #include "http_response.hpp"
 
-namespace ppsever {
+namespace ppserver {
 
 HttpResponse::HttpResponse() 
     : status_code_(HttpStatusCode::OK) {

@@ -4,10 +4,10 @@
 #include <unordered_map>
 #include <vector>
 #include "connection.hpp"
-// #include "connection_manager.hpp"
+#include "connection_manager.hpp"
 #include "event_loop.hpp"
 
-namespace ppsever {
+namespace ppserver {
 
 class HttpResponse {
 public:

@@ -7,7 +7,7 @@
 #include<unordered_set>
 #include "http_request.hpp"
 
-namespace ppsever {
+namespace ppserver {
 
 
 enum class ParseState {

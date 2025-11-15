@@ -13,10 +13,11 @@ include_directories(include)
 # 核心源文件列表
 set(CORE_SOURCES
 
-    # src/core/connection_manager.cpp
+    src/core/connection_manager.cpp
     src/core/connection.cpp
     src/core/event_loop.cpp
     src/core/web_server.cpp
+    src/core/handler.cpp
 
     src/core/http_response.cpp
     src/core/thread_pool.cpp

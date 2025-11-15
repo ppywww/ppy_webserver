@@ -5,6 +5,7 @@ CMakeFiles/ppserver.dir/src/core/connection.cpp.o: ../src/core/connection.cpp
 CMakeFiles/ppserver.dir/src/core/connection.cpp.o: ../src/core/connection.hpp
 CMakeFiles/ppserver.dir/src/core/connection.cpp.o: ../src/core/connection_manager.hpp
 CMakeFiles/ppserver.dir/src/core/connection.cpp.o: ../src/core/event_loop.hpp
+CMakeFiles/ppserver.dir/src/core/connection.cpp.o: ../src/core/handler.hpp
 CMakeFiles/ppserver.dir/src/core/connection.cpp.o: ../src/core/http_parser.hpp
 CMakeFiles/ppserver.dir/src/core/connection.cpp.o: ../src/core/http_request.hpp
 CMakeFiles/ppserver.dir/src/core/connection.cpp.o: ../src/core/http_response.hpp
@@ -15,6 +16,7 @@ CMakeFiles/ppserver.dir/src/core/connection_manager.cpp.o: ../src/core/connectio
 CMakeFiles/ppserver.dir/src/core/connection_manager.cpp.o: ../src/core/connection_manager.cpp
 CMakeFiles/ppserver.dir/src/core/connection_manager.cpp.o: ../src/core/connection_manager.hpp
 CMakeFiles/ppserver.dir/src/core/connection_manager.cpp.o: ../src/core/event_loop.hpp
+CMakeFiles/ppserver.dir/src/core/connection_manager.cpp.o: ../src/core/handler.hpp
 CMakeFiles/ppserver.dir/src/core/connection_manager.cpp.o: ../src/core/http_parser.hpp
 CMakeFiles/ppserver.dir/src/core/connection_manager.cpp.o: ../src/core/http_request.hpp
 CMakeFiles/ppserver.dir/src/core/connection_manager.cpp.o: ../src/core/http_response.hpp
@@ -23,6 +25,17 @@ CMakeFiles/ppserver.dir/src/core/connection_manager.cpp.o: ../src/core/web_serve
 
 CMakeFiles/ppserver.dir/src/core/event_loop.cpp.o: ../src/core/event_loop.cpp
 CMakeFiles/ppserver.dir/src/core/event_loop.cpp.o: ../src/core/event_loop.hpp
+
+CMakeFiles/ppserver.dir/src/core/handler.cpp.o: ../src/core/connection.hpp
+CMakeFiles/ppserver.dir/src/core/handler.cpp.o: ../src/core/connection_manager.hpp
+CMakeFiles/ppserver.dir/src/core/handler.cpp.o: ../src/core/event_loop.hpp
+CMakeFiles/ppserver.dir/src/core/handler.cpp.o: ../src/core/handler.cpp
+CMakeFiles/ppserver.dir/src/core/handler.cpp.o: ../src/core/handler.hpp
+CMakeFiles/ppserver.dir/src/core/handler.cpp.o: ../src/core/http_parser.hpp
+CMakeFiles/ppserver.dir/src/core/handler.cpp.o: ../src/core/http_request.hpp
+CMakeFiles/ppserver.dir/src/core/handler.cpp.o: ../src/core/http_response.hpp
+CMakeFiles/ppserver.dir/src/core/handler.cpp.o: ../src/core/thread_pool.hpp
+CMakeFiles/ppserver.dir/src/core/handler.cpp.o: ../src/core/web_server.hpp
 
 CMakeFiles/ppserver.dir/src/core/http_parser.cpp.o: ../src/core/http_parser.cpp
 CMakeFiles/ppserver.dir/src/core/http_parser.cpp.o: ../src/core/http_parser.hpp
@@ -34,6 +47,7 @@ CMakeFiles/ppserver.dir/src/core/http_request.cpp.o: ../src/core/http_request.hp
 CMakeFiles/ppserver.dir/src/core/http_response.cpp.o: ../src/core/connection.hpp
 CMakeFiles/ppserver.dir/src/core/http_response.cpp.o: ../src/core/connection_manager.hpp
 CMakeFiles/ppserver.dir/src/core/http_response.cpp.o: ../src/core/event_loop.hpp
+CMakeFiles/ppserver.dir/src/core/http_response.cpp.o: ../src/core/handler.hpp
 CMakeFiles/ppserver.dir/src/core/http_response.cpp.o: ../src/core/http_parser.hpp
 CMakeFiles/ppserver.dir/src/core/http_response.cpp.o: ../src/core/http_request.hpp
 CMakeFiles/ppserver.dir/src/core/http_response.cpp.o: ../src/core/http_response.cpp
@@ -44,6 +58,7 @@ CMakeFiles/ppserver.dir/src/core/http_response.cpp.o: ../src/core/web_server.hpp
 CMakeFiles/ppserver.dir/src/core/main.cpp.o: ../src/core/connection.hpp
 CMakeFiles/ppserver.dir/src/core/main.cpp.o: ../src/core/connection_manager.hpp
 CMakeFiles/ppserver.dir/src/core/main.cpp.o: ../src/core/event_loop.hpp
+CMakeFiles/ppserver.dir/src/core/main.cpp.o: ../src/core/handler.hpp
 CMakeFiles/ppserver.dir/src/core/main.cpp.o: ../src/core/http_parser.hpp
 CMakeFiles/ppserver.dir/src/core/main.cpp.o: ../src/core/http_request.hpp
 CMakeFiles/ppserver.dir/src/core/main.cpp.o: ../src/core/http_response.hpp
@@ -51,19 +66,13 @@ CMakeFiles/ppserver.dir/src/core/main.cpp.o: ../src/core/main.cpp
 CMakeFiles/ppserver.dir/src/core/main.cpp.o: ../src/core/thread_pool.hpp
 CMakeFiles/ppserver.dir/src/core/main.cpp.o: ../src/core/web_server.hpp
 
-CMakeFiles/ppserver.dir/src/core/thread_pool.cpp.o: ../src/core/connection.hpp
-CMakeFiles/ppserver.dir/src/core/thread_pool.cpp.o: ../src/core/connection_manager.hpp
-CMakeFiles/ppserver.dir/src/core/thread_pool.cpp.o: ../src/core/event_loop.hpp
-CMakeFiles/ppserver.dir/src/core/thread_pool.cpp.o: ../src/core/http_parser.hpp
-CMakeFiles/ppserver.dir/src/core/thread_pool.cpp.o: ../src/core/http_request.hpp
-CMakeFiles/ppserver.dir/src/core/thread_pool.cpp.o: ../src/core/http_response.hpp
 CMakeFiles/ppserver.dir/src/core/thread_pool.cpp.o: ../src/core/thread_pool.cpp
 CMakeFiles/ppserver.dir/src/core/thread_pool.cpp.o: ../src/core/thread_pool.hpp
-CMakeFiles/ppserver.dir/src/core/thread_pool.cpp.o: ../src/core/web_server.hpp
 
 CMakeFiles/ppserver.dir/src/core/web_server.cpp.o: ../src/core/connection.hpp
 CMakeFiles/ppserver.dir/src/core/web_server.cpp.o: ../src/core/connection_manager.hpp
 CMakeFiles/ppserver.dir/src/core/web_server.cpp.o: ../src/core/event_loop.hpp
+CMakeFiles/ppserver.dir/src/core/web_server.cpp.o: ../src/core/handler.hpp
 CMakeFiles/ppserver.dir/src/core/web_server.cpp.o: ../src/core/http_parser.hpp
 CMakeFiles/ppserver.dir/src/core/web_server.cpp.o: ../src/core/http_request.hpp
 CMakeFiles/ppserver.dir/src/core/web_server.cpp.o: ../src/core/http_response.hpp

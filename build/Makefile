@@ -204,6 +204,33 @@ src/core/event_loop.cpp.s:
 	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/event_loop.cpp.s
 .PHONY : src/core/event_loop.cpp.s
 
+src/core/handler.o: src/core/handler.cpp.o
+
+.PHONY : src/core/handler.o
+
+# target to build an object file
+src/core/handler.cpp.o:
+	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/handler.cpp.o
+.PHONY : src/core/handler.cpp.o
+
+src/core/handler.i: src/core/handler.cpp.i
+
+.PHONY : src/core/handler.i
+
+# target to preprocess a source file
+src/core/handler.cpp.i:
+	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/handler.cpp.i
+.PHONY : src/core/handler.cpp.i
+
+src/core/handler.s: src/core/handler.cpp.s
+
+.PHONY : src/core/handler.s
+
+# target to generate assembly for a file
+src/core/handler.cpp.s:
+	$(MAKE) -f CMakeFiles/ppserver.dir/build.make CMakeFiles/ppserver.dir/src/core/handler.cpp.s
+.PHONY : src/core/handler.cpp.s
+
 src/core/http_parser.o: src/core/http_parser.cpp.o
 
 .PHONY : src/core/http_parser.o
@@ -384,6 +411,9 @@ help:
 	@echo "... src/core/event_loop.o"
 	@echo "... src/core/event_loop.i"
 	@echo "... src/core/event_loop.s"
+	@echo "... src/core/handler.o"
+	@echo "... src/core/handler.i"
+	@echo "... src/core/handler.s"
 	@echo "... src/core/http_parser.o"
 	@echo "... src/core/http_parser.i"
 	@echo "... src/core/http_parser.s"

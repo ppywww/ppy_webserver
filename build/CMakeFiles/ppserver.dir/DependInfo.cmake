@@ -7,6 +7,7 @@ set(CMAKE_DEPENDS_CHECK_CXX
   "/home/ppy001/project/ppserver/src/core/connection.cpp" "/home/ppy001/project/ppserver/build/CMakeFiles/ppserver.dir/src/core/connection.cpp.o"
   "/home/ppy001/project/ppserver/src/core/connection_manager.cpp" "/home/ppy001/project/ppserver/build/CMakeFiles/ppserver.dir/src/core/connection_manager.cpp.o"
   "/home/ppy001/project/ppserver/src/core/event_loop.cpp" "/home/ppy001/project/ppserver/build/CMakeFiles/ppserver.dir/src/core/event_loop.cpp.o"
+  "/home/ppy001/project/ppserver/src/core/handler.cpp" "/home/ppy001/project/ppserver/build/CMakeFiles/ppserver.dir/src/core/handler.cpp.o"
   "/home/ppy001/project/ppserver/src/core/http_parser.cpp" "/home/ppy001/project/ppserver/build/CMakeFiles/ppserver.dir/src/core/http_parser.cpp.o"
   "/home/ppy001/project/ppserver/src/core/http_request.cpp" "/home/ppy001/project/ppserver/build/CMakeFiles/ppserver.dir/src/core/http_request.cpp.o"
   "/home/ppy001/project/ppserver/src/core/http_response.cpp" "/home/ppy001/project/ppserver/build/CMakeFiles/ppserver.dir/src/core/http_response.cpp.o"

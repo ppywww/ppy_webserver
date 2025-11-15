@@ -5,16 +5,16 @@
 #include <system_error>
 #include <cstring>
 #include <algorithm>
+#include <netinet/tcp.h>
 
-
-namespace ppsever {
+namespace ppserver {
 
 // 构造函数
 Connection::Connection(int socket_fd, WebServer& server)
     : socket_fd_(socket_fd),
+      state_(State::DISCONNECTED),
       server_(server),
       event_loop_(server.GetEventLoop()),
-      state_(State::DISCONNECTED),
       create_time_(time(nullptr)),
       last_activity_time_(create_time_),
       max_buffer_size_(1048576),   // 默认1MB缓冲区
@@ -41,15 +41,18 @@ Connection::~Connection() {
     }
 }
 
-
+void Connection::SetHandler(std::shared_ptr<Handler> handler) {
+    handler_ = std::move(handler);
+}
 void Connection::Start() {
     // 注册到事件循环
-    event_loop_.AddFd(socket_fd_, EventLoop::EPOLL_READ | EventLoop::EPOLL_ET,
-        [self = shared_from_this()](int fd, uint32_t events) {
-            self->HandleReadable();
-        });
+    // event_loop_.AddFd(socket_fd_, EventLoop::EPOLL_READ | EventLoop::EPOLL_ET,
+    //     [self = shared_from_this()](int , uint32_t ) {
+    //         self->HandleReadable();
+    //     });
     
     state_ = State::CONNECTED;
+
     UpdateActivityTime();
     // Handler切入连接建立流程的入口点
     if (handler_) {
@@ -128,17 +131,18 @@ ssize_t Connection::ReadData() {
 }
 
 // 写入数据
-ssize_t Connection::WriteData(const std::string& data) {
-    if (state_ != State::CONNECTED && state_ != State::WRITING) {
-        return -1;
-    }
-    
+ssize_t Connection::WriteData(const std::string& data) {//给handler自实现handlewrite用的
+    // if (state_ != State::CONNECTED && state_ != State::WRITING) {
+    //     return -1;
+    // }
+    std::cout << "write_buffer_size111:" << write_buffer_.size() << std::endl;
     // 保护缓冲区访问
     std::lock_guard<std::mutex> lock(buffer_mutex_);
     
     // 追加数据到写缓冲区
     size_t old_size = write_buffer_.size();
     write_buffer_.append(data);
+    std::cout << "write_buffer_size222:" << write_buffer_.size() << std::endl;
     
     // 检查缓冲区大小限制
     if (write_buffer_.size() > max_buffer_size_) {
@@ -149,8 +153,9 @@ ssize_t Connection::WriteData(const std::string& data) {
     
     // 如果写缓冲区非空，注册写事件监控
     if ( ! write_buffer_.empty()) {
+        ////////////////////////////////////////////updatefd只关注写事件////////////////////////////////////
         event_loop_.UpdateFd(socket_fd_, 
-            EventLoop::EPOLL_READ | EventLoop::EPOLL_WRITE | EventLoop::EPOLL_ET);
+            EventLoop::EPOLL_READ | EventLoop::EPOLL_WRITE | EventLoop::EPOLL_ET);//*****注册写事件*****
         
         state_ = State::WRITING;
     }
@@ -160,6 +165,8 @@ ssize_t Connection::WriteData(const std::string& data) {
 
 
 void Connection::HandleReadable() {
+
+
     // 这是Handler切入事件处理流程的入口点
     if (handler_) {
 
@@ -209,7 +216,7 @@ void Connection::SetupSocketOptions() {
     
     // 设置TCP_NODELAY减少延迟
     int opt = 1;
-    if (setsockopt(socket_fd_, IPPROTO_TCP, O_NDELAY, &opt, sizeof(opt)) < 0) {
+    if (setsockopt(socket_fd_, IPPROTO_TCP, TCP_NODELAY, &opt, sizeof(opt)) < 0) {
         throw std::system_error(errno, std::system_category(), 
                                "Failed to set TCP_NODELAY");
     }
@@ -221,7 +228,6 @@ void Connection::SetupSocketOptions() {
                                "Failed to set SO_KEEPALIVE");
     }
 }
-
 
 std::string Connection::GetRemoteAddress() const {
     char ip[INET_ADDRSTRLEN];
@@ -250,7 +256,9 @@ void Connection::NotifyError(const std::string& error_msg) {
 
 void Connection::DefaultHandleRead() {
     // 默认读取处理逻辑
+
     ssize_t bytes_read = ReadData();
+
     if (bytes_read > 0) {
         // 触发读回调
         if (read_callback_) {
@@ -258,24 +266,38 @@ void Connection::DefaultHandleRead() {
         }
     }
 }
-void Connection::DefaultHandleWrite() {
+
+ 
+
+void Connection::DefaultHandleWrite() {//buffer写到socket
     // 默认写处理逻辑
     std::lock_guard<std::mutex> lock(buffer_mutex_);
-    if (!write_buffer_.empty()) {
+    if (!write_buffer_.empty()) {//如果缓冲区非空
         ssize_t n = write(socket_fd_, write_buffer_.c_str(), write_buffer_.size());
-        if (n > 0) {
+        if (n > 0) {//如果写入成功
+            // 移除已写入的数据
             write_buffer_.erase(0, n);
-            if (write_buffer_.empty() && write_callback_) {
-                write_callback_();
+            
+            // 如果缓冲区已清空
+            if (write_buffer_.empty()) {
+                // //////////////////////更新事件监控，只关注读事件/////////////////////
+                event_loop_.UpdateFd(socket_fd_, EventLoop::EPOLL_READ | EventLoop::EPOLL_ET);
+                state_ = State::CONNECTED;
+                
+                // 触发写回调 
+                if (write_callback_) {
+                    write_callback_();
+                }
             }
-        } else if (n < 0 && errno != EAGAIN && errno != EWOULDBLOCK) {
-            NotifyError("Write error: " + std::string(strerror(errno)));
-            Close();
+        } else if (n < 0) {
+            // 处理写错误
+            if (errno != EAGAIN && errno != EWOULDBLOCK) {
+                NotifyError("Write error: " + std::string(strerror(errno)));
+                Close();
+            }
         }
     }
-   
 }
-
 void Connection::DefaultHandleError() {
     // 默认错误处理逻辑
     NotifyError("Epoll event error");
@@ -289,8 +311,7 @@ bool Connection::TryParseHttpRequest() {
         return false;
     }
     
-    auto& http_parser = server_.GetHttpParser();// 获取HTTP解析器
-    auto request = http_parser.Parse(read_buffer_.c_str(),read_buffer_.length());
+    auto request = http_parser_.Parse(read_buffer_.c_str(),read_buffer_.length());
     
     if (request.success) {
     
@@ -305,6 +326,7 @@ bool Connection::TryParseHttpRequest() {
     
     return false; 
 }
+
 
 // 其余getter和setter方法实现
 Connection::State Connection::GetState() const { return state_; }

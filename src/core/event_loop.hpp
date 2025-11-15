@@ -14,7 +14,7 @@
 #include <algorithm>
 #include <queue>
 
-namespace ppsever {
+namespace ppserver {
 
 /**
  * EventLoop - 事件循环核心组件

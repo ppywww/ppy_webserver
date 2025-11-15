@@ -10,7 +10,7 @@
 #include <functional>     // 用于 std::function
 #include <unistd.h>
 
-namespace ppsever {
+namespace ppserver {
 
 EventLoop::EventLoop() 
     : epoll_fd_(-1),
@@ -105,6 +105,7 @@ bool EventLoop::IsInLoopThread() const {
 }
 
 void EventLoop::AddFd(int fd, uint32_t events, EventCallback callback) {
+    
     std::lock_guard<std::recursive_mutex> lock(fd_mutex_);//保护共享资源 fd_callbacks_（文件描述符回调映射）的线程安全访问
     
     // 设置边缘触发模式

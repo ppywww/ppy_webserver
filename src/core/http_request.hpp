@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <utility>
 
-namespace ppsever {
+namespace ppserver {
 
 class HttpRequest {
 public:
@@ -153,4 +153,4 @@ HttpRequest::Method StringToMethod(const std::string& str);
 std::string VersionToString(HttpRequest::Version version);
 HttpRequest::Version StringToVersion(const std::string& str);
 
-} // namespace ppsever
+} // namespace ppserver

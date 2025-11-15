@@ -2,6 +2,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/ppserver.dir/src/core/connection.cpp.o"
   "CMakeFiles/ppserver.dir/src/core/connection_manager.cpp.o"
   "CMakeFiles/ppserver.dir/src/core/event_loop.cpp.o"
+  "CMakeFiles/ppserver.dir/src/core/handler.cpp.o"
   "CMakeFiles/ppserver.dir/src/core/http_parser.cpp.o"
   "CMakeFiles/ppserver.dir/src/core/http_request.cpp.o"
   "CMakeFiles/ppserver.dir/src/core/http_response.cpp.o"
